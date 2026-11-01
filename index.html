@@ -1,0 +1,118 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#09050f">
+  <title>ALONEXITES KEY</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      color: #fff;
+      background: radial-gradient(ellipse at top, #32103f 0%, #100817 45%, #050407 100%);
+    }
+    .card {
+      width: 100%;
+      max-width: 390px;
+      padding: 30px 24px;
+      border: 1px solid #a855f7;
+      border-radius: 20px;
+      background: rgba(15, 9, 23, .96);
+      box-shadow: 0 0 30px #a855f733;
+      text-align: center;
+    }
+    .logo {
+      width: 68px;
+      height: 68px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 16px;
+      border-radius: 18px;
+      border: 1px solid #d946ef;
+      color: #e879f9;
+      font-size: 32px;
+      background: #260d32;
+    }
+    h1 { font-size: 25px; margin: 0 0 8px; letter-spacing: 1px; }
+    .subtitle { color: #bda9c9; font-size: 13px; margin-bottom: 26px; }
+    label { display: block; text-align: left; font-size: 13px; margin-bottom: 8px; color: #e9d5ff; }
+    input {
+      width: 100%;
+      padding: 15px 12px;
+      border: 1px solid #58316b;
+      border-radius: 10px;
+      background: #09060e;
+      color: white;
+      outline: none;
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+    input:focus { border-color: #d946ef; }
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 5px;
+      border: 0;
+      border-radius: 10px;
+      background: linear-gradient(90deg, #9333ea, #d946ef);
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .6; }
+    .status { min-height: 20px; margin-top: 16px; font-size: 13px; color: #e9d5ff; overflow-wrap: anywhere; }
+    .footer { color: #887894; font-size: 11px; margin-top: 24px; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="logo">🔑</div>
+    <h1>ALONEXITES KEY</h1>
+    <p class="subtitle">SECURE ACCESS PORTAL</p><form id="accessForm">
+  <label for="accessKey">ENTER YOUR ACCESS KEY</label>
+  <input id="accessKey" name="key" type="text"
+    placeholder="ALONE-XXXXX-XXXXX-XXXXX"
+    autocomplete="off" required>
+  <button id="submitButton" type="submit">UNLOCK ACCESS</button>
+</form>
+
+<p class="status" id="status" role="status" aria-live="polite"></p>
+<p class="footer">ALONEXITES KEY · SECURE ACCESS</p>
+
+  </main>  <script>
+    const form = document.getElementById('accessForm');
+    const input = document.getElementById('accessKey');
+    const button = document.getElementById('submitButton');
+    const status = document.getElementById('status');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const key = input.value.trim();
+      if (!key) return;
+
+      button.disabled = true;
+      status.textContent = 'Checking access key…';
+
+      try {
+        const response = await fetch('/api/activate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key })
+        });
+        const result = await response.json();
+        status.textContent = result.message ||
+          (result.success ? 'Access granted.' : 'Access could not be verified.');
+      } catch {
+        status.textContent = 'Could not contact the verification service. Please try again later.';
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script></body>
+  </html>
