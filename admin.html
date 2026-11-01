@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ALONEXITES KEY — Admin</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; padding: 24px;
+      background: #080512; color: white;
+      font-family: Arial, sans-serif;
+    }
+    main { max-width: 650px; margin: 35px auto; }
+    h1 { color: #c084fc; text-align: center; }
+    .panel {
+      background: #160d27; border: 1px solid #7135a8;
+      border-radius: 14px; padding: 22px; margin-top: 20px;
+    }
+    input, button {
+      width: 100%; padding: 14px; margin-top: 12px;
+      border-radius: 8px; font-size: 15px;
+    }
+    input { background: #090612; color: white; border: 1px solid #7040a0; }
+    button {
+      background: #9333ea; color: white; border: 0;
+      font-weight: bold; cursor: pointer;
+    }
+    button.secondary { background: #30203f; }
+    button.danger { background: #9f243e; }
+    .key {
+      overflow-wrap: anywhere; color: #d8b4fe;
+      font-weight: bold; margin-top: 16px;
+    }
+    #status { color: #d8b4fe; margin-top: 14px; }
+    .hidden { display: none; }
+    .small { color: #b9a9ca; font-size: 13px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>ALONEXITES KEY</h1>
+  <p class="small" style="text-align:center">SECURE ADMIN DASHBOARD</p>
+
+  <section class="panel" id="login">
+    <h2>Admin Login</h2>
+    <input id="secret" type="password" placeholder="Enter admin password">
+    <button onclick="login()">LOGIN</button>
+  </section>
+
+  <section class="panel hidden" id="dashboard">
+    <h2>Key Management</h2>
+    <button onclick="generateKey()">GENERATE NEW KEY</button>
+    <div id="newKey" class="key"></div>
+    <button class="secondary hidden" id="copyBtn" onclick="copyKey()">COPY KEY</button>
+
+    <hr style="border-color:#49305d;margin:25px 0">
+
+    <h3>Revoke an access key</h3>
+    <input id="revokeInput" placeholder="Enter key to revoke">
+    <button class="danger" onclick="revokeKey()">REVOKE KEY</button>
+    <button class="secondary" onclick="logout()">LOG OUT</button>
+  </section>
+
+  <p id="status"></p>
+</main>
+
+<script>
+let adminSecret = "";
+let latestKey = "";
+
+async function requestAPI(url, body) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-secret": adminSecret
+    },
+    body: JSON.stringify(body)
+  });
+
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || "Request failed.");
+  }
+  return data;
+}
+
+async function login() {
+  const password = document.getElementById("secret").value;
+  if (!password) {
+    status("Enter your admin password.");
+    return;
+  }
+
+  adminSecret = password;
+  try {
+    await requestAPI("/api/admin/generate", {});
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+    status("Admin access granted.");
+  } catch (error) {
+    adminSecret = "";
+    status("Login failed: " + error.message);
+  }
+}
+
+async function generateKey() {
+  try {
+    const data = await requestAPI("/api/admin/generate", {});
+    latestKey = data.key;
+    document.getElementById("newKey").textContent = latestKey;
+    document.getElementById("copyBtn").classList.remove("hidden");
+    status("New access key generated.");
+  } catch (error) {
+    status(error.message);
+  }
+}
+
+async function copyKey() {
+  if (!latestKey) return;
+  try {
+    await navigator.clipboard.writeText(latestKey);
+    status("Key copied.");
+  } catch {
+    status("Copy unavailable. Select and copy the key manually.");
+  }
+}
+
+async function revokeKey() {
+  const key = document.getElementById("revokeInput").value.trim();
+  if (!key) {
+    status("Enter a key to revoke.");
+    return;
+  }
+  if (!confirm("Are you sure you want to revoke this key?")) return;
+
+  try {
+    const data = await requestAPI("/api/admin/revoke", { key });
+    status(data.message || "Revoke request completed.");
+    document.getElementById("revokeInput").value = "";
+  } catch (error) {
+    status(error.message);
+  }
+}
+
+function logout() {
+  adminSecret = "";
+  latestKey = "";
+  document.getElementById("secret").value = "";
+  document.getElementById("dashboard").classList.add("hidden");
+  document.getElementById("login").classList.remove("hidden");
+  document.getElementById("newKey").textContent = "";
+  document.getElementById("copyBtn").classList.add("hidden");
+  status("Logged out.");
+}
+
+function status(message) {
+  document.getElementById("status").textContent = message;
+}
+</script>
+</body>
+  </html>
